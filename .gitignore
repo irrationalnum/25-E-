@@ -1,0 +1,31 @@
+# CCS build outputs (including generated HEX and OUT files)
+**/Debug/
+**/Release/
+
+# IDE workspace cache
+.metadata/
+
+# Historical backup archives
+*.zip
+*.7z
+*.rar
+
+# OS and editor temporary files
+Thumbs.db
+.DS_Store
+*~
+*.swp
+*.swo
+
+# CCS 自动生成的代码补全配置及缓存
+**/.clangd
+**/.cache/
+
+# 主机测试程序：脚本中断时可能残留
+/tests
+
+# Keep source, documentation, .syscfg, targetConfigs/ and CCS project settings.
+
+
+#custom
+/.codex/
