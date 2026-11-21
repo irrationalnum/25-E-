@@ -24,7 +24,7 @@ void PI_Init(PI_Controller *pi, float kp, float ki)
 {
     pi->kp = kp;
     pi->ki = ki;
-    pi->integral = 0.0f;
+    pi->integral = 0;
 }
 
 void PI_MotorsInit(float kp, float ki)
@@ -40,13 +40,13 @@ void PI_MotorsInit(float kp, float ki)
 /* PI计算 */
 int16_t PI_Update(PI_Controller *pi, float target_speed, float actual_speed, float dt)
 {
-    if (target_speed == 0.0f)
+    if (target_speed == 0)
     {
         PI_Reset(pi);
         return 0;
     }
 
-    if (dt <= 0.0f)
+    if (dt <= 0)
     {
         return 0;
     }
@@ -66,7 +66,7 @@ int16_t PI_Update(PI_Controller *pi, float target_speed, float actual_speed, flo
     /* 5. 抗积分饱和 */
     float output = p_out + new_integral;
 
-    if (!((output > PI_PWM_MAX && error > 0.0) || (output < -PI_PWM_MAX && error < 0.0)))
+    if (!((output > PI_PWM_MAX && error > 0) || (output < -PI_PWM_MAX && error < 0)))
     {
         pi->integral = new_integral;
     }
@@ -100,7 +100,7 @@ void PI_MotorsUpdate(const float target_speed[2], float dt, int16_t pwm_out[4])
 /* 清除积分 */
 void PI_Reset(PI_Controller *pi)
 {
-    pi->integral = 0.0f;
+    pi->integral = 0;
 }
 
 void PI_MotorsReset(int16_t pwm_out[4])
@@ -116,7 +116,7 @@ void PI_MotorsReset(int16_t pwm_out[4])
 
 uint8_t PI_SetGains(float kp, float ki)
 {
-    if (!(kp >= 0.0f && kp <= 100.0f && ki >= 0.0f && ki <= 100.0f))
+    if (!(kp >= 0 && kp <= 100 && ki >= 0 && ki <= 100))
     {
         return 0;
     }
@@ -125,7 +125,7 @@ uint8_t PI_SetGains(float kp, float ki)
     {
         s_pi_motor[i].kp = kp;
         s_pi_motor[i].ki = ki;
-        s_pi_motor[i].integral = 0.0f;
+        s_pi_motor[i].integral = 0;
     }
 
     return 1;

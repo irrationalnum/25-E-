@@ -53,9 +53,9 @@ typedef enum{
 
 static const float speed_table[3] =
 {
-    150.0f,
-    300.0f,
-    600.0f
+    150,
+    300,
+    600
 };
 
 
@@ -77,7 +77,7 @@ int main(void)
     uint32_t last_line_ms = 0;            //上次循迹控制时刻
     uint8_t is_following = 1;             //循迹开关
 
-    PI_MotorsInit(1.5, 8.0);           //PID
+    PI_MotorsInit(1.5, 8);           //PID
     Car_Stop();
     DL_Common_delayCycles(320000);
     UART_SendString(UART_MOTOR_INST, "$upload:0,0,1#");         //驱动板速度汇报
@@ -107,12 +107,13 @@ int main(void)
 
                     last_control_ms = now;
                     last_control_frame = encoder_getFrameCount();
-                    last_line_ms = now - 20;
+                    last_line_ms = now - LINE_CONTROL_PERIOD_MS;
                     
                     state = MOTOR_RUNNING;
                     break;
 
                 case MOTOR_RUNNING:
+                    Line_ResetRecovery();
                     PI_MotorsReset(pwm_output);
                     Car_Stop();
                     
@@ -120,6 +121,7 @@ int main(void)
                     break;
 
                 default:
+                    Line_ResetRecovery();
                     Car_Stop();
                     state = MOTOR_STOPPED;
                     break;
@@ -145,7 +147,7 @@ int main(void)
         {
             is_following ^= 1;
             Line_ResetRecovery();
-            last_line_ms = now - 20;
+            last_line_ms = now - LINE_CONTROL_PERIOD_MS;
             if (state == MOTOR_RUNNING && !is_following)
             {
                 Car_Move(speed_table[level], 0);
@@ -153,17 +155,20 @@ int main(void)
         }
 
 
-        //循迹
+        /* 巡线调度：运行且巡线开启时，按固定周期更新 */
         if (state == MOTOR_RUNNING && is_following)
         {
-            if ((now - last_line_ms) >= 20)
+            if ((now - last_line_ms) >= LINE_CONTROL_PERIOD_MS)
             {
                 last_line_ms = now;
 
-                if (!Line_Follow(speed_table[level]))
+                LineFollowResult line_result = Line_Follow(speed_table[level], now);
+                if (line_result != LINE_FOLLOW_RUNNING)
                 {
-                    /* 保留运行请求，停车等待期间仍检测巡线和反馈 */
+                    /* 全白等待保留运行请求；全黑或异常组合取消运行 */
                     PI_MotorsReset(pwm_output);
+                    if (line_result == LINE_FOLLOW_STOPPED)
+                        state = MOTOR_STOPPED;
                 }
             }
         }
@@ -176,6 +181,7 @@ int main(void)
             uint32_t elapsed_ms = now - last_control_ms;
             if (!encoder_isFresh(now, 300) || elapsed_ms > 300)
             {
+                Line_ResetRecovery();
                 Car_Stop();
                 PI_MotorsReset(pwm_output);
 

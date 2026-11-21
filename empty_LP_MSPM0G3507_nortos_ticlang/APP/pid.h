@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 /* PWM输出和积分限幅 */
-#define PI_PWM_MAX  3600.0f
-#define PI_I_MAX    1800.0f
+#define PI_PWM_MAX  3600
+#define PI_I_MAX    1800
 
 typedef struct
 {

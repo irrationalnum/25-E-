@@ -10,13 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TELEMETRY_PERIOD_MS 60U
+#define TELEMETRY_PERIOD_MS 60
 
 static uint32_t s_last_send_ms = 0;
 
 void telemetry_task(uint32_t now_ms)
 {
-    if ((uint32_t)(now_ms - s_last_send_ms) < TELEMETRY_PERIOD_MS)
+    if ((now_ms - s_last_send_ms) < TELEMETRY_PERIOD_MS)
     {
         return;
     }
@@ -24,7 +24,7 @@ void telemetry_task(uint32_t now_ms)
     s_last_send_ms = now_ms;
 
     /* 速度反馈超过300ms未更新，不发送旧数据 */
-    if (!encoder_isFresh(now_ms, 300U))
+    if (!encoder_isFresh(now_ms, 300))
     {
         UART_SendString(UART_PC_INST, "eeeeeeeeeeeee\r\n");
         return;
@@ -36,10 +36,10 @@ void telemetry_task(uint32_t now_ms)
         buffer,
         sizeof(buffer),
         "%.1f,%.1f,%.1f,%.1f\r\n",
-        (double)encoder_getSpeed(0),
-        (double)encoder_getSpeed(1),
-        (double)encoder_getSpeed(2),
-        (double)encoder_getSpeed(3)
+        encoder_getSpeed(0),
+        encoder_getSpeed(1),
+        encoder_getSpeed(2),
+        encoder_getSpeed(3)
     );
 
     if (len > 0 && (size_t)len < sizeof(buffer))

@@ -3,9 +3,28 @@
 
 #include <stdint.h>
 
+/* 主循环调度周期，也是连续调用的最小间隔，单位 ms */
+#define LINE_CONTROL_PERIOD_MS  20
+
+typedef enum {
+    LINE_FOLLOW_WAIT = 0,    /* 全白停车等待，可在确认找回后恢复 */
+    LINE_FOLLOW_RUNNING = 1,
+    LINE_FOLLOW_STOPPED = 2  /* 全黑或异常停止，须按 K1 重新启动 */
+} LineFollowResult;
+
+/* 清除循迹历史和候选计数，保留当前比例系数 */
 void Line_ResetRecovery(void);
-/* 每 20 ms 调用；返回 0 表示停车等待，丢线/全黑后连续 3 次有效检测才恢复 */
-uint8_t Line_Follow(float base_speed);
+
+/* 每 LINE_CONTROL_PERIOD_MS ms 调用，同次运行中相邻调用至少间隔该周期；
+ * now 为实际毫秒数，用于丢线期限，返回值见 LineFollowResult。
+ * 全白有可靠历史时保持该偏差（为 0 则直行），无历史立即等待。
+ * 从最近可靠检测计时，80 ms 进入寻线，达到 200 ms 后等待；全黑或非相邻组合要求 MOTOR_STOPPED。
+ * 运动中连续 2 次正常检测确认找回，全白停车等待后连续 3 次恢复；不检查候选偏差变化。
+ * 首次运动候选立即修正但不刷新历史；转向直接按比例计算，不作限幅或平滑。
+ */
+LineFollowResult Line_Follow(float base_speed, uint32_t now);
+
+/* 设置 0～1 的比例系数；较大系数允许反向轮速目标；成功返回 1，非法参数返回 0 */
 uint8_t Line_SetKp(float kp);
 
 #endif

@@ -1,7 +1,7 @@
 #include "bsp_key.h"
 #include "ti_msp_dl_config.h"
 
-#define KEY_DEBOUNCE_MS 20U
+#define KEY_DEBOUNCE_MS 20
 
 uint8_t keyK1Pressed(uint32_t now)
 {
@@ -9,7 +9,7 @@ uint8_t keyK1Pressed(uint32_t now)
     static uint32_t change_time = 0;
 
     uint8_t pressed =
-        (DL_GPIO_readPins(KEY_PORT, KEY_K1_PIN) == 0U);
+        (DL_GPIO_readPins(KEY_PORT, KEY_K1_PIN) == 0);
 
     switch (state)
     {
@@ -26,7 +26,7 @@ uint8_t keyK1Pressed(uint32_t now)
             {
                 state = 0;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 2;
@@ -47,7 +47,7 @@ uint8_t keyK1Pressed(uint32_t now)
             {
                 state = 2;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 0;
@@ -70,7 +70,7 @@ uint8_t keyK2Pressed(uint32_t now)
 
     /* PB19低电平表示按下 */
     uint8_t pressed =
-        (DL_GPIO_readPins(KEY2_PORT, KEY2_K2_PIN) == 0U);
+        (DL_GPIO_readPins(KEY2_PORT, KEY2_K2_PIN) == 0);
 
     switch (state)
     {
@@ -87,7 +87,7 @@ uint8_t keyK2Pressed(uint32_t now)
             {
                 state = 0;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 2;
@@ -108,7 +108,7 @@ uint8_t keyK2Pressed(uint32_t now)
             {
                 state = 2;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 0;
@@ -131,7 +131,7 @@ uint8_t keyK3Pressed(uint32_t now)
 
     /* PB19低电平表示按下 */
     uint8_t pressed =
-        (DL_GPIO_readPins(KEY3_PORT, KEY3_PIN_0_PIN) == 0U);
+        (DL_GPIO_readPins(KEY3_PORT, KEY3_PIN_0_PIN) == 0);
 
     switch (state)
     {
@@ -148,7 +148,7 @@ uint8_t keyK3Pressed(uint32_t now)
             {
                 state = 0;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 2;
@@ -169,7 +169,7 @@ uint8_t keyK3Pressed(uint32_t now)
             {
                 state = 2;
             }
-            else if ((uint32_t)(now - change_time)
+            else if ((now - change_time)
                      >= KEY_DEBOUNCE_MS)
             {
                 state = 0;

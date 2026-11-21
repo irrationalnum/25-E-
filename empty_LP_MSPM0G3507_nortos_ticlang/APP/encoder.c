@@ -52,7 +52,7 @@ static void encoder_parseFrame(const char *frame, uint32_t now_ms)
             return;
         }
 
-        if (i < 4 - 1U)
+        if (i < 4 - 1)
         {
             if (*end != ',')
             {

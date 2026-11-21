@@ -30,7 +30,7 @@ void Motor_SetPWM4(int16_t pwm1, int16_t pwm2, int16_t pwm3, int16_t pwm4)
 {
     char cmd[48];
 
-    snprintf(cmd, sizeof(cmd),  "$pwm:%d,%d,%d,%d#", (int)Motor_LimitPWM(pwm1), (int)Motor_LimitPWM(pwm2), (int)Motor_LimitPWM(pwm3), (int)Motor_LimitPWM(pwm4));
+    snprintf(cmd, sizeof(cmd),  "$pwm:%d,%d,%d,%d#", Motor_LimitPWM(pwm1), Motor_LimitPWM(pwm2), Motor_LimitPWM(pwm3), Motor_LimitPWM(pwm4));
 
     UART_SendString(UART_MOTOR_INST, cmd);
 }
@@ -48,7 +48,7 @@ void Car_Move(float base_speed, float turn)
 
 void Car_Stop(void)
 {
-    Car_SetSpeed(0.0, 0.0);
+    Car_SetSpeed(0, 0);
     UART_SendString(UART_MOTOR_INST, "$pwm:0,0,0,0#");
 }
 
