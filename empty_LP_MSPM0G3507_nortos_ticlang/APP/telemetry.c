@@ -11,6 +11,14 @@
 #include <string.h>
 
 #define TELEMETRY_PERIOD_MS 60
+#define PC_RECEIVE_BYTE_LIMIT 127
+
+typedef struct
+{
+    char frame[32];
+    uint8_t length;
+    uint8_t receiving;
+} PC_ReceiveState;
 
 static uint32_t s_last_send_ms = 0;
 
@@ -26,7 +34,7 @@ void telemetry_task(uint32_t now_ms)
     /* 速度反馈超过300ms未更新，不发送旧数据 */
     if (!encoder_isFresh(now_ms, 300))
     {
-        UART_SendString(UART_PC_INST, "eeeeeeeeeeeee\r\n");
+        UART_PC_SendString("eeeeeeeeeeeee\r\n");
         return;
     }
 
@@ -44,14 +52,14 @@ void telemetry_task(uint32_t now_ms)
 
     if (len > 0 && (size_t)len < sizeof(buffer))
     {
-        UART_SendString(UART_PC_INST, buffer);
+        UART_PC_SendString(buffer);
     } 
 }
 
 
 
 
-static void PI_ParseCommand(const char *cmd)
+static void PI_ParseCommand(UART_Regs *uart, const char *cmd)
 {
     if (strncmp(cmd, "PI:", 3) != 0)
     {
@@ -78,13 +86,13 @@ static void PI_ParseCommand(const char *cmd)
 
     if (PI_SetGains(kp, ki))
     {
-        UART_SendString(UART_PC_INST, "PI:OK\r\n");
+        UART_SendString(uart, "PI:OK\r\n");
     }
 }
 
 
 
-static void Line_ParseCommand(const char *cmd)
+static void Line_ParseCommand(UART_Regs *uart, const char *cmd)
 {
     if (strncmp(cmd, "LINEKP:", 7) != 0)
     {
@@ -103,58 +111,71 @@ static void Line_ParseCommand(const char *cmd)
 
     if (Line_SetKp(kp))
     {
-        UART_SendString(UART_PC_INST, "LINEKP:OK\r\n");
+        UART_SendString(uart, "LINEKP:OK\r\n");
+    }
+}
+
+
+static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state)
+{
+    uint8_t data;
+
+    /* 每路每轮限量处理，持续输入时也要回到主循环处理另一口和电机。 */
+    for (uint8_t count = 0; count < PC_RECEIVE_BYTE_LIMIT; count++)
+    {
+        int8_t result = UART_PC_ReadByte(uart, &data);
+        if (result == 0)
+        {
+            break;
+        }
+        if (result < 0)
+        {
+            /* 只放弃发生溢出的本路半帧，等待下一个 $。 */
+            state->length = 0;
+            state->receiving = 0;
+            continue;
+        }
+
+        if (data == '$')
+        {
+            state->length = 0;
+            state->receiving = 1;
+            continue;
+        }
+        if (!state->receiving)
+        {
+            continue;
+        }
+        if (data == '#')
+        {
+            state->frame[state->length] = '\0';
+            PI_ParseCommand(uart, state->frame);
+            Line_ParseCommand(uart, state->frame);
+            state->length = 0;
+            state->receiving = 0;
+            continue;
+        }
+        if (state->length < sizeof(state->frame) - 1)
+        {
+            state->frame[state->length++] = (char)data;
+        }
+        else
+        {
+            state->length = 0;
+            state->receiving = 0;
+        }
     }
 }
 
 
 void PC_ReceiveTask(void)
 {
-    static char frame[32];
-    static uint8_t length = 0;
-    static uint8_t receiving = 0;
-    uint8_t data;
+    static PC_ReceiveState main_state;
+    static PC_ReceiveState alt_state;
 
-    while (UART0_ReadByte(&data))
-    {
-        if (data == '$')
-        {
-            length = 0;
-            receiving = 1;
-            continue;
-        }
-
-        if (!receiving)
-        {
-            continue;
-        }
-
-        if (data == '#')
-        {
-            frame[length] = '\0';
-
-            PI_ParseCommand(frame);
-            Line_ParseCommand(frame);
-
-            length = 0;
-            receiving = 0;
-            continue;
-        }
-        if (length < sizeof(frame) - 1)
-        {
-            frame[length++] = (char)data;
-        }
-        else
-        {
-            length = 0;
-            receiving = 0;
-        }
-    }
+    PC_ReceivePort(UART_PC_INST, &main_state);
+    PC_ReceivePort(UART_PC_ALT_INST, &alt_state);
 }
-
-
-
-
 
 
 void telemetry_debug(uint32_t now_ms)
@@ -164,16 +185,18 @@ void telemetry_debug(uint32_t now_ms)
     uint8_t data;
 
     /* 将驱动板收到的数据逐字节转发给电脑 */
-    while (!DL_UART_isTXFIFOFull(UART_PC_INST) && UART1_ReadByte(&data))
+    while (!DL_UART_isTXFIFOFull(UART_PC_INST) &&
+           !DL_UART_isTXFIFOFull(UART_PC_ALT_INST) && UART1_ReadByte(&data))
     {
         DL_UART_transmitData(UART_PC_INST, data);
+        DL_UART_transmitData(UART_PC_ALT_INST, data);
     }
 }
 
 
 void UART_PC_Test(void)
 {
-    UART_SendString(UART_PC_INST, "Hello MSPM0!\r\n");
+    UART_PC_SendString("Hello MSPM0!\r\n");
     DL_Common_delayCycles(3200000);
 }
 

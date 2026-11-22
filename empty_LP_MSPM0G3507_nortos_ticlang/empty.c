@@ -82,7 +82,7 @@ int main(void)
     DL_Common_delayCycles(320000);
     UART_SendString(UART_MOTOR_INST, "$upload:0,0,1#");         //驱动板速度汇报
     DL_Common_delayCycles(320000);
-    UART_SendString(UART_PC_INST, "...start...\r\n");
+    UART_PC_SendString("...start...\r\n");
     DL_Common_delayCycles(320000);
 
     while (1)
