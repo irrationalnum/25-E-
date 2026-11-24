@@ -5,7 +5,7 @@
 
 
 #define LEFT_MOTOR_ID     1
-#define RIGHT_MOTOR_ID    3
+#define RIGHT_MOTOR_ID    0
 
 extern float target_speed[2];
 

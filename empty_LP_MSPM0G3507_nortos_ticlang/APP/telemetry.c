@@ -18,6 +18,7 @@ typedef struct
     char frame[32];
     uint8_t length;
     uint8_t receiving;
+    uint8_t run_prefix;
 } PC_ReceiveState;
 
 static uint32_t s_last_send_ms = 0;
@@ -116,7 +117,26 @@ static void Line_ParseCommand(UART_Regs *uart, const char *cmd)
 }
 
 
-static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state)
+static void Run_ParseByte(UART_Regs *uart, PC_ReceiveState *state, uint8_t data,
+                          uint32_t now_ms, PC_RunHandler run_handler, void *context)
+{
+    if (state->run_prefix && (data == '2' || data == '3'))
+    {
+        state->run_prefix = 0;
+        if (run_handler != 0)
+        {
+            run_handler(data == '2', now_ms, context);
+            UART_SendString(uart, data == '2' ? "START:OK\r\n" : "STOP:OK\r\n");
+        }
+        return;
+    }
+
+    state->run_prefix = (data == '0');
+}
+
+
+static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state,
+                           uint32_t now_ms, PC_RunHandler run_handler, void *context)
 {
     uint8_t data;
 
@@ -130,9 +150,10 @@ static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state)
         }
         if (result < 0)
         {
-            /* 只放弃发生溢出的本路半帧，等待下一个 $。 */
+            /* 只放弃本路半帧；原来在文本帧内时继续丢弃到帧尾。 */
             state->length = 0;
-            state->receiving = 0;
+            state->receiving = state->receiving ? 2 : 0;
+            state->run_prefix = 0;
             continue;
         }
 
@@ -140,10 +161,28 @@ static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state)
         {
             state->length = 0;
             state->receiving = 1;
+            state->run_prefix = 0;
             continue;
         }
         if (!state->receiving)
         {
+            Run_ParseByte(uart, state, data, now_ms, run_handler, context);
+            continue;
+        }
+        if (state->receiving == 2)
+        {
+            /* 超长或非法文本帧内的 02/03 不能作为启停命令。 */
+            if (data == '#')
+            {
+                state->receiving = 0;
+            }
+            continue;
+        }
+        if (data == 0)
+        {
+            /* ASCII 命令中不允许 NUL，避免截断后误识别为启停命令。 */
+            state->length = 0;
+            state->receiving = 2;
             continue;
         }
         if (data == '#')
@@ -162,19 +201,19 @@ static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state)
         else
         {
             state->length = 0;
-            state->receiving = 0;
+            state->receiving = 2;
         }
     }
 }
 
 
-void PC_ReceiveTask(void)
+void PC_ReceiveTask(uint32_t now_ms, PC_RunHandler run_handler, void *context)
 {
     static PC_ReceiveState main_state;
     static PC_ReceiveState alt_state;
 
-    PC_ReceivePort(UART_PC_INST, &main_state);
-    PC_ReceivePort(UART_PC_ALT_INST, &alt_state);
+    PC_ReceivePort(UART_PC_INST, &main_state, now_ms, run_handler, context);
+    PC_ReceivePort(UART_PC_ALT_INST, &alt_state, now_ms, run_handler, context);
 }
 
 

@@ -28,10 +28,9 @@ const ProjectConfig = scripting.addModule("/ti/project_config/ProjectConfig");
  */
 GPIO1.$name                         = "LED1";
 GPIO1.port                          = "PORTB";
-GPIO1.associatedPins[0].$name       = "PIN_2";
 GPIO1.associatedPins[0].ioStructure = "SD";
-GPIO1.associatedPins[0].assignedPin = "2";
-GPIO1.associatedPins[0].pin.$assign = "PB2";
+GPIO1.associatedPins[0].assignedPin = "3";
+GPIO1.associatedPins[0].$name       = "PIN_3";
 
 const Board                       = scripting.addModule("/ti/driverlib/Board", {}, false);
 Board.peripheral.$assign          = "DEBUGSS";
@@ -143,9 +142,7 @@ UART3.enableFIFO                       = true;
 UART3.rxFifoThreshold                  = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
 UART3.enabledInterrupts                = ["OVERRUN_ERROR","RX"];
 UART3.interruptPriority                = "1";
-UART3.peripheral.$assign               = "UART3";
-UART3.peripheral.rxPin.$assign         = "PA13";
-UART3.peripheral.txPin.$assign         = "PA14";
+UART3.peripheral.$assign               = "UART2";
 UART3.txPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric4";
 UART3.txPinConfig.direction            = scripting.forceWrite("OUTPUT");
 UART3.txPinConfig.hideOutputInversion  = scripting.forceWrite(false);
@@ -164,8 +161,11 @@ scripting.suppress("Migrating requires going through the Switch Board or Device 
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
+GPIO1.associatedPins[0].pin.$suggestSolution = "PB3";
 GPIO4.associatedPins[0].pin.$suggestSolution = "PA24";
 GPIO4.associatedPins[1].pin.$suggestSolution = "PA25";
 GPIO4.associatedPins[2].pin.$suggestSolution = "PA26";
 GPIO4.associatedPins[3].pin.$suggestSolution = "PA27";
 GPIO5.associatedPins[0].pin.$suggestSolution = "PB20";
+UART3.peripheral.rxPin.$suggestSolution      = "PA22";
+UART3.peripheral.txPin.$suggestSolution      = "PA21";
