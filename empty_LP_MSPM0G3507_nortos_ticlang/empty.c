@@ -221,6 +221,7 @@ int main(void)
         }
 
         //telemetry_task(now);
+        telemetry_line_debug(now);            //循迹调试
     }
 }
 

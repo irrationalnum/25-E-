@@ -11,6 +11,7 @@
 #include <string.h>
 
 #define TELEMETRY_PERIOD_MS 60
+#define LINE_DEBUG_PERIOD_MS 1000
 #define PC_RECEIVE_BYTE_LIMIT 127
 
 typedef struct
@@ -22,6 +23,33 @@ typedef struct
 } PC_ReceiveState;
 
 static uint32_t s_last_send_ms = 0;
+static uint32_t s_line_debug_last_send_ms = 0;
+static uint8_t s_line_debug_sent = 0;
+
+void telemetry_line_debug(uint32_t now_ms)
+{
+    if (s_line_debug_sent &&
+        (now_ms - s_line_debug_last_send_ms) < LINE_DEBUG_PERIOD_MS)
+    {
+        return;
+    }
+
+    /* 发送失败也消耗本次周期，避免下一轮立即重试。 */
+    s_line_debug_sent = 1;
+    s_line_debug_last_send_ms = now_ms;
+
+    uint8_t sensor[4];
+    uint8_t count;
+    LinePattern pattern = Line_GetReading(sensor, &count);
+
+    char buffer[32];
+    int len = snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d,%d,%d\r\n",
+                       sensor[0], sensor[1], sensor[2], sensor[3], count, pattern);
+    if (len > 0 && (size_t)len < sizeof(buffer))
+    {
+        UART_PC_SendString(buffer);
+    }
+}
 
 void telemetry_task(uint32_t now_ms)
 {

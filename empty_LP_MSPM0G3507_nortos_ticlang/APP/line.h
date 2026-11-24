@@ -3,6 +3,14 @@
 
 #include <stdint.h>
 
+/* 本次实测线型，供循迹和串口调试共用 */
+typedef enum {
+    LINE_VALID = 0,
+    LINE_WHITE,
+    LINE_BLACK,
+    LINE_INVALID
+} LinePattern;
+
 /* 主循环调度周期，也是连续调用的最小间隔，单位 ms */
 #define LINE_CONTROL_PERIOD_MS  20
 
@@ -11,6 +19,9 @@ typedef enum {
     LINE_FOLLOW_RUNNING = 1,
     LINE_FOLLOW_STOPPED = 2  /* 全黑或异常停止，须按 K1 重新启动 */
 } LineFollowResult;
+
+/* 只读取并分类当前四路输入，不改变循迹历史、候选或电机目标。 */
+LinePattern Line_GetReading(uint8_t sensor[4], uint8_t *count);
 
 /* 清除循迹历史和候选计数，保留当前比例系数 */
 void Line_ResetRecovery(void);

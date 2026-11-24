@@ -6,6 +6,8 @@
 
 /* 定时向电脑发送电机速度 */
 void telemetry_task(uint32_t now_ms);
+/* 主循环独立调用，首次立即采样发送，以后每秒一次，不受小车状态影响。 */
+void telemetry_line_debug(uint32_t now_ms);
 /* run 为 1 请求启动，为 0 请求停车；回调只在主循环中执行。 */
 typedef void (*PC_RunHandler)(uint8_t run, uint32_t now_ms, void *context);
 void PC_ReceiveTask(uint32_t now_ms, PC_RunHandler run_handler, void *context);

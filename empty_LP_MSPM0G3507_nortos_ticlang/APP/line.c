@@ -17,13 +17,6 @@ typedef enum {
     LINE_LOST
 } LineState;
 
-typedef enum {
-    LINE_VALID = 0,
-    LINE_WHITE,
-    LINE_BLACK,
-    LINE_INVALID
-} LinePattern;
-
 /* 循迹状态与比例系数 */
 static float line_correct_kp = 0.1; /* 默认循迹系数，可通过串口调整 */
 static LineState line_state = LINE_NORMAL;
@@ -73,6 +66,12 @@ static LinePattern Line_Classify(const uint8_t sensor[4], uint8_t *count)
         return LINE_INVALID;
 
     return LINE_VALID;
+}
+
+LinePattern Line_GetReading(uint8_t sensor[4], uint8_t *count)
+{
+    Line_Read(sensor);
+    return Line_Classify(sensor, count);
 }
 
 static void Line_ResetHistory(void)
@@ -136,8 +135,7 @@ LineFollowResult Line_Follow(float base_speed, uint32_t now)
     uint8_t count;
 
     /* 读取实测输入，全黑或异常组合直接取消运行 */
-    Line_Read(sensor);
-    LinePattern pattern = Line_Classify(sensor, &count);
+    LinePattern pattern = Line_GetReading(sensor, &count);
     if (pattern == LINE_BLACK || pattern == LINE_INVALID)
     {
         Line_ResetRecovery();
