@@ -131,6 +131,8 @@ int main(void)
         control.stop_requested = 0;
 
         encoder_process(now);                        //处理驱动板速度汇报
+
+        //telemetry_line_debug(now);                   //循迹调试，独立于启停和巡线开关
         
         uint8_t k1 = keyK1Pressed(now);
         uint8_t k2 = keyK2Pressed(now);

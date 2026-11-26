@@ -12,4 +12,7 @@ void PC_ReceiveTask(uint32_t now_ms, PC_RunHandler run_handler, void *context);
 void telemetry_debug(uint32_t now_ms);
 void UART_PC_Test(void);
 
+/* 循迹调试：首次立即采样发送，之后每秒一次；主循环独立调用。 */
+void telemetry_line_debug(uint32_t now_ms);
+
 #endif

@@ -228,3 +228,31 @@ void UART_PC_Test(void)
     UART_PC_SendString("Hello MSPM0!\r\n");
     DL_Common_delayCycles(3200000);
 }
+
+/* 循迹调试：独立于运行状态，每秒输出当前四路黑线标志、数量和分类。 */
+void telemetry_line_debug(uint32_t now_ms)
+{
+    static uint32_t last_send_ms = 0;
+    static uint8_t sent = 0;
+
+    if (sent && (now_ms - last_send_ms) < 1000)
+    {
+        return;
+    }
+
+    /* 失败尝试也消耗本次周期，避免下一轮立即重试。 */
+    sent = 1;
+    last_send_ms = now_ms;
+
+    uint8_t sensor[4];
+    uint8_t count;
+    LinePattern pattern = Line_GetReading(sensor, &count);
+
+    char buffer[32];
+    int len = snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d,%d,%d\r\n",
+                       sensor[0], sensor[1], sensor[2], sensor[3], count, pattern);
+    if (len > 0 && (size_t)len < sizeof(buffer))
+    {
+        UART_PC_SendString(buffer);
+    }
+}
