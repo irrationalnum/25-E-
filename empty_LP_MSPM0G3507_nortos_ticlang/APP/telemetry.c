@@ -11,7 +11,6 @@
 #include <string.h>
 
 #define TELEMETRY_PERIOD_MS 60
-#define LINE_DEBUG_PERIOD_MS 1000
 #define PC_RECEIVE_BYTE_LIMIT 127
 
 typedef struct
@@ -23,33 +22,6 @@ typedef struct
 } PC_ReceiveState;
 
 static uint32_t s_last_send_ms = 0;
-static uint32_t s_line_debug_last_send_ms = 0;
-static uint8_t s_line_debug_sent = 0;
-
-void telemetry_line_debug(uint32_t now_ms)
-{
-    if (s_line_debug_sent &&
-        (now_ms - s_line_debug_last_send_ms) < LINE_DEBUG_PERIOD_MS)
-    {
-        return;
-    }
-
-    /* 发送失败也消耗本次周期，避免下一轮立即重试。 */
-    s_line_debug_sent = 1;
-    s_line_debug_last_send_ms = now_ms;
-
-    uint8_t sensor[4];
-    uint8_t count;
-    LinePattern pattern = Line_GetReading(sensor, &count);
-
-    char buffer[32];
-    int len = snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d,%d,%d\r\n",
-                       sensor[0], sensor[1], sensor[2], sensor[3], count, pattern);
-    if (len > 0 && (size_t)len < sizeof(buffer))
-    {
-        UART_PC_SendString(buffer);
-    }
-}
 
 void telemetry_task(uint32_t now_ms)
 {
@@ -85,9 +57,6 @@ void telemetry_task(uint32_t now_ms)
     } 
 }
 
-
-
-
 static void PI_ParseCommand(UART_Regs *uart, const char *cmd)
 {
     if (strncmp(cmd, "PI:", 3) != 0)
@@ -119,8 +88,6 @@ static void PI_ParseCommand(UART_Regs *uart, const char *cmd)
     }
 }
 
-
-
 static void Line_ParseCommand(UART_Regs *uart, const char *cmd)
 {
     if (strncmp(cmd, "LINEKP:", 7) != 0)
@@ -144,7 +111,6 @@ static void Line_ParseCommand(UART_Regs *uart, const char *cmd)
     }
 }
 
-
 static void Run_ParseByte(UART_Regs *uart, PC_ReceiveState *state, uint8_t data,
                           uint32_t now_ms, PC_RunHandler run_handler, void *context)
 {
@@ -161,7 +127,6 @@ static void Run_ParseByte(UART_Regs *uart, PC_ReceiveState *state, uint8_t data,
 
     state->run_prefix = (data == '0');
 }
-
 
 static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state,
                            uint32_t now_ms, PC_RunHandler run_handler, void *context)
@@ -234,7 +199,6 @@ static void PC_ReceivePort(UART_Regs *uart, PC_ReceiveState *state,
     }
 }
 
-
 void PC_ReceiveTask(uint32_t now_ms, PC_RunHandler run_handler, void *context)
 {
     static PC_ReceiveState main_state;
@@ -243,7 +207,6 @@ void PC_ReceiveTask(uint32_t now_ms, PC_RunHandler run_handler, void *context)
     PC_ReceivePort(UART_PC_INST, &main_state, now_ms, run_handler, context);
     PC_ReceivePort(UART_PC_ALT_INST, &alt_state, now_ms, run_handler, context);
 }
-
 
 void telemetry_debug(uint32_t now_ms)
 {
@@ -260,11 +223,8 @@ void telemetry_debug(uint32_t now_ms)
     }
 }
 
-
 void UART_PC_Test(void)
 {
     UART_PC_SendString("Hello MSPM0!\r\n");
     DL_Common_delayCycles(3200000);
 }
-
-

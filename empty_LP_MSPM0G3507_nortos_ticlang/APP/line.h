@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-/* 本次实测线型，供循迹和串口调试共用 */
+/* 本次实测线型 */
 typedef enum {
     LINE_VALID = 0,
     LINE_WHITE,

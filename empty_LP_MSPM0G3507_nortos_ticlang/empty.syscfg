@@ -72,11 +72,11 @@ GPIO4.associatedPins[1].assignedPin = "25";
 GPIO4.associatedPins[2].$name       = "S2";
 GPIO4.associatedPins[2].direction   = "INPUT";
 GPIO4.associatedPins[2].ioStructure = "SD";
-GPIO4.associatedPins[2].assignedPin = "26";
+GPIO4.associatedPins[2].assignedPin = "27";
 GPIO4.associatedPins[3].direction   = "INPUT";
 GPIO4.associatedPins[3].ioStructure = "SD";
-GPIO4.associatedPins[3].assignedPin = "27";
 GPIO4.associatedPins[3].$name       = "S3";
+GPIO4.associatedPins[3].assignedPin = "26";
 
 GPIO5.portSegment                        = "Upper";
 GPIO5.$name                              = "KEY3";
@@ -164,8 +164,8 @@ scripting.suppress("Migrating requires going through the Switch Board or Device 
 GPIO1.associatedPins[0].pin.$suggestSolution = "PB3";
 GPIO4.associatedPins[0].pin.$suggestSolution = "PA24";
 GPIO4.associatedPins[1].pin.$suggestSolution = "PA25";
-GPIO4.associatedPins[2].pin.$suggestSolution = "PA26";
-GPIO4.associatedPins[3].pin.$suggestSolution = "PA27";
+GPIO4.associatedPins[2].pin.$suggestSolution = "PA27";
+GPIO4.associatedPins[3].pin.$suggestSolution = "PA26";
 GPIO5.associatedPins[0].pin.$suggestSolution = "PB20";
 UART3.peripheral.rxPin.$suggestSolution      = "PA22";
 UART3.peripheral.txPin.$suggestSolution      = "PA21";
